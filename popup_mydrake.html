@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        #container { width: 215px; padding: 12px; font-size: 13px; }
+        h1 { font-size: 16px; margin-top: 0; }
+        .controls-container { display: flex; flex-direction: column; gap: 8px; }
+        .status-container { display: flex; flex-direction: column; gap: 3px; }
+        .hidden { display: none; }
+        
+        .controls { display: flex; flex-direction: column; gap: 3px; }
+
+        #status,#total,#envios,#falhas { font-weight: 600; }
+        #envios { color: green; }
+        #falhas { color: red; }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <h1>
+            <div>MyDrake</div>
+            <div>Cadastro de eventos em lote</div>
+        </h1>
+        <hr/>
+        <div class="controls-container">
+            <div class="controls">
+                <label>Ocorrência</label>
+                <select id="occurrences"><option>Carregando...</option></select>
+            </div>
+            <div class="controls">
+                <label>Unidade Operacional</label>
+                <select id="operationalUnits"><option>Carregando...</option></select>
+            </div>
+            <div class="controls">
+                <label>Cost Center</label>
+                <select id="costCenters"><option>Carregando...</option></select>
+            </div>
+            <div class="controls">
+                <label>Marcações</label>
+                <textarea id="timeEntries" rows="12"></textarea>
+            </div>
+            <div class="controls">
+                <button id="trigger">Enviar!</button>
+            </div>
+        </div>
+        <div class="status-container hidden">
+            <div id="status">Enviando...</div>
+            <div>Total a enviar: <span id="total">0</span></div>
+            <div>Envios: <span id="envios">0</span></div>
+            <div>Falhas: <span id="falhas">0</span></div>
+        </div>
+    </div>
+    
+    <script src="popup_mydrake.js"></script>
+</body>
+</html>
