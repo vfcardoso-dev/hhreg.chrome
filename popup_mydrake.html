@@ -2,13 +2,17 @@
 <html>
 <head>
     <style>
-        #container { width: 215px; padding: 12px; font-size: 13px; }
+        #container { width: 215px; padding: 12px; font-size: 13px; position: relative; }
+        #closeBtn { position: absolute; top: 12px; right: 12px }
         h1 { font-size: 16px; margin-top: 0; }
         .controls-container { display: flex; flex-direction: column; gap: 8px; }
         .status-container { display: flex; flex-direction: column; gap: 3px; }
         .hidden { display: none; }
         
         .controls { display: flex; flex-direction: column; gap: 3px; }
+        .controls select:disabled,.controls textarea:disabled { 
+            color: #858585; pointer-events: none; cursor: not-allowed; background-color: #cecece; border: #858585;
+        }
 
         #status,#total,#envios,#falhas { font-weight: 600; }
         #envios { color: green; }
@@ -17,6 +21,7 @@
 </head>
 <body>
     <div id="container">
+        <a href="#" id="closeBtn">[x]</a>
         <h1>
             <div>MyDrake</div>
             <div>Cadastro de eventos em lote</div>

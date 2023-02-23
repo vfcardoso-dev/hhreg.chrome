@@ -1,14 +1,14 @@
 const occurrencesApiUrl = '/api/v2/My/AdditionalEvents/GetOccurrences';
 const operationalUnitsApiUrl = '/api/v2/KeyValue/OperationalUnits?page=1&limit=100';
 const costCentersApiUrl = '/api/v2/KeyValue/CostCenters?page=1&limit=100';
-let originUrl = undefined;
 
-const getOrigin = async () => {
-    if (originUrl) return originUrl;
-
+const getConfig = async () => {
     let [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    originUrl = new URL(tab.url).origin;
-    return originUrl;
+    
+    return ({
+        originUrl: new URL(tab.url).origin,
+        tabId: tab.id
+    });
 }
 
 const getOcurrences = async (origin) => {
@@ -28,15 +28,15 @@ const hideContainer = (container) => document.querySelector(container)?.classLis
 const showContainer = (container) => document.querySelector(container)?.classList.remove('hidden');
 const disableAll = () => {
     const disableElement = (el) => el.setAttribute("disabled", true)
-    document.getElementsByName('select').forEach(disableElement)
-    document.getElementsByName('textarea').forEach(disableElement)
-    document.getElementsByName('button').forEach(disableElement)
+    document.querySelectorAll('select').forEach(disableElement)
+    document.querySelectorAll('textarea').forEach(disableElement)
+    document.querySelectorAll('button').forEach(disableElement)
 }
 const enableAll = () => {
     const enableElement = (el) => el.removeAttribute("disabled");
-    document.getElementsByName('select').forEach(enableElement)
-    document.getElementsByName('textarea').forEach(enableElement)
-    document.getElementsByName('button').forEach(enableElement)
+    document.querySelectorAll('select').forEach(enableElement)
+    document.querySelectorAll('textarea').forEach(enableElement)
+    document.querySelectorAll('button').forEach(enableElement)
 }
 const populateSelect = (items, elemId) => {
     const elem = document.getElementById(elemId);
@@ -49,15 +49,64 @@ const populateSelect = (items, elemId) => {
     })
 }
 
+const bulkCreateAdditionalEvents = (origin, tabId, entries) => {
+    const additionalEventsApiUrl = `${origin}/api/v2/My/AdditionalEvents`;
+
+    hideContainer('.controls-container');
+    showContainer('.status-container');
+
+    let total, envios, falhas;
+    total = entries.length;
+    envios = 0;
+    falhas = 0;
+
+    document.getElementById('total').innerHTML = total;
+
+    const updateInfo = () => {
+        if (total > 0) {
+            if (total === envios + falhas) {
+                document.getElementById('status').innerHTML = total === envios ? 'Successo!' : 'Falhou!';
+                document.getElementById('status').style.color = total === envios ? 'green' : 'red';
+            }
+            
+            if (total === envios) {
+                chrome.tabs.reload(tabId);
+            }
+        }
+    }
+
+    entries.forEach(entry => {
+        fetch(additionalEventsApiUrl, {
+            method: 'post',
+            headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+            body: JSON.stringify(entry)
+        }).then(() => {
+            envios++;
+            document.getElementById('envios').innerHTML = envios;
+            updateInfo();
+        }).catch((e) => {
+            falhas++;
+            document.getElementById('falhas').innerHTML = falhas;
+            updateInfo();
+            console.log(e);
+        });
+    });
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
-    disableAll();
+    document.getElementById("closeBtn").addEventListener("click", (e) => {
+        e.preventDefault();
+        window.close();
+    });
     
-    const origin = await getOrigin();
+    const cfg = await getConfig();
+
+    disableAll();
 
     Promise.all([
-            getOcurrences(origin), 
-            getKeyValues(`${origin}${operationalUnitsApiUrl}`), 
-            getKeyValues(`${origin}${costCentersApiUrl}`)
+            getOcurrences(cfg.originUrl), 
+            getKeyValues(`${cfg.originUrl}${operationalUnitsApiUrl}`), 
+            getKeyValues(`${cfg.originUrl}${costCentersApiUrl}`)
         ])
         .then(results => {
             populateSelect(results[0], 'occurrences');
@@ -67,43 +116,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
 
     document.getElementById("trigger").addEventListener("click", async () => {
-        alert('dispara! pew! pew!');
+        const occurrenceId = document.getElementById('occurrences').value;
+        const operationalUnitId = document.getElementById('operationalUnits').value;
+        const costCenterId = document.getElementById('costCenters').value;
+        const encodedEntries = document.getElementById('timeEntries').value;
+        const decodedEntries = atob(encodedEntries);
+        const jsonEntries = JSON.parse(decodedEntries);
 
-        // POST: /api/v2/My/AdditionalEvents
-        // {
-        //   costCenterId: uuid,
-        //   start: date+time,
-        //   end: date+time,
-        //   id: uuid,
-        //   justification: string,
-        //   occurrenceId: uuid,
-        //   rigId: uuid,
-        //   event: {
-        //      costCenter: { id: uuid, name: string },
-        //      occurrence: { id: uuid, name: string },
-        //      operationalUnit: { id: uuid, name: string },
-        //      startDate: date+time,
-        //      endDate: date+time,
-        //      reason: string,
-        //   }
-        // }
+        jsonEntries.forEach(entry => {
+            entry.occurrenceId = occurrenceId;
+            entry.rigId = operationalUnitId;
+            entry.costCenterId = costCenterId;
+            entry.event.occurrence.id = occurrenceId;
+            entry.event.operationalUnit.id = operationalUnitId;
+            entry.event.costCenter.id = costCenterId;
+        });
+
+        bulkCreateAdditionalEvents(cfg.originUrl, cfg.tabId, jsonEntries);
     });
 });
-
-
-// let xhr = new XMLHttpRequest();
-// xhr.open('GET', origin + '/api/v2/My/Profile/CurrentTenantId');
-// xhr.onload = function() {
-//     if (xhr.status != 200) { // analyze HTTP status of the response
-//         alert(`Error ${xhr.status}: ${xhr.statusText}`); // e.g. 404: Not Found
-//     } else { // show the result
-//         //alert(`Done, got ${xhr.response.length} bytes`); // response is the server response
-//         alert(`Done, got ${xhr.responseText}`); // response is the server response
-//     }
-//     window.close();
-// };
-// xhr.onerror = function() {
-//     alert("Request failed");
-//     window.close();
-// };
-// xhr.send();
