@@ -1,1 +1,2 @@
-# chrome extension for hhreg cli
+# Chrome extension for Hhreg CLI
+

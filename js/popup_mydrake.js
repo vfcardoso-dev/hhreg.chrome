@@ -65,8 +65,10 @@ const bulkCreateAdditionalEvents = (origin, tabId, entries) => {
     const updateInfo = () => {
         if (total > 0) {
             if (total === envios + falhas) {
-                document.getElementById('status').innerHTML = total === envios ? 'Successo!' : 'Falhou!';
-                document.getElementById('status').style.color = total === envios ? 'green' : 'red';
+                const statusEl = document.getElementById('status');
+                statusEl.innerHTML = total === envios ? 'Successo!' : 'Falhou!';
+                statusEl.style.backgroundColor = total === envios ? 'green' : 'red';
+                statusEl.style.color = 'white';
             }
             
             if (total === envios) {
