@@ -134,6 +134,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             entry.event.costCenter.id = costCenterId;
         });
 
-        bulkCreateAdditionalEvents(cfg.originUrl, cfg.tabId, jsonEntries);
+        const count = jsonEntries.length;
+        const firstEntry = jsonEntries[0].start;
+        const lastEntry = jsonEntries[count - 1].end;
+
+        if (confirm(`Enviando ${count} registros, iniciando em ${firstEntry} e terminando em ${lastEntry}. CONFIRMA?`)) {
+            bulkCreateAdditionalEvents(cfg.originUrl, cfg.tabId, jsonEntries);
+        }        
     });
 });
